@@ -12,10 +12,43 @@ function requireAuth(context) {
 }
 
 function todayId(timezone = 'America/Detroit') {
-  const d = new Date();
-  const yyyy = d.getUTCFullYear();
-  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(d.getUTCDate()).padStart(2, '0');
+  if (typeof timezone !== 'string' || !timezone.trim()) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'Timezone must be a non-empty string.'
+    );
+  }
+
+  const tz = timezone.trim();
+
+  let formatter;
+  try {
+    formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  } catch (err) {
+    if (err instanceof RangeError) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        `Invalid timezone provided: ${tz}`
+      );
+    }
+
+    throw new functions.https.HttpsError('internal', 'Failed to create formatter.');
+  }
+
+  const parts = formatter.formatToParts(new Date());
+  const yyyy = parts.find((p) => p.type === 'year')?.value;
+  const mm = parts.find((p) => p.type === 'month')?.value;
+  const dd = parts.find((p) => p.type === 'day')?.value;
+
+  if (!yyyy || !mm || !dd) {
+    throw new functions.https.HttpsError('internal', 'Failed to format date.');
+  }
+
   return `${yyyy}-${mm}-${dd}`;
 }
 
