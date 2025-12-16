@@ -251,6 +251,27 @@ exports.createPost = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * User onCreate trigger - initialize profile
+ */
+exports.onUserCreate = functions.auth.user().onCreate(async (user) => {
+  const uid = user.uid;
+  const email = user.email || '';
+  const displayName = user.displayName || '';
+
+  await admin.firestore().doc(`users/${uid}`).set({
+    email,
+    displayName,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    roles: ['user'],
+    stats: {
+      goalsCompleted: 0,
+      currentStreak: 0
+    }
+  });
+  console.log(`Created user profile for ${uid}`);
+});
+
+/**
  * User onDelete trigger - cleanup
  */
 exports.onUserDelete = functions.auth.user().onDelete(async (user) => {
@@ -259,4 +280,20 @@ exports.onUserDelete = functions.auth.user().onDelete(async (user) => {
   console.log(`Deleted user data for ${uid}`);
 });
 
-module.exports = { generateDailyPlan: exports.generateDailyPlan, logWorkout: exports.logWorkout, createPost: exports.createPost, onUserDelete: exports.onUserDelete };
+const { sendPartnerInvite, respondToInvite } = require('./partners');
+const { createGoal, submitProof, verifyProof } = require('./goals');
+
+module.exports = {
+  generateDailyPlan: exports.generateDailyPlan,
+  logWorkout: exports.logWorkout,
+  createPost: exports.createPost,
+  onUserCreate: exports.onUserCreate,
+  onUserDelete: exports.onUserDelete,
+  // Partners
+  sendPartnerInvite,
+  respondToInvite,
+  // Goals
+  createGoal,
+  submitProof,
+  verifyProof
+};

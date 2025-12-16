@@ -24,9 +24,14 @@ service cloud.firestore {
       match /workouts/{workoutId} {
         allow read, write: if isOwner(uid);
       }
-      
+
+      match /goals/{goalId} {
+        allow read: if isOwner(uid) || (resource.data.assignedPartners != null && request.auth.uid in resource.data.assignedPartners);
+        allow write: if isOwner(uid); // Or restrict to Cloud Functions only via admin
+      }
+
       match /partners/{partnerUid} {
-        allow read, write: if isOwner(uid);
+        allow read: if isOwner(uid);
       }
     }
     
@@ -34,6 +39,16 @@ service cloud.firestore {
       allow read: if true;
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    match /invites/{inviteId} {
+      allow read: if signedIn() && (resource.data.from == request.auth.uid || resource.data.to == request.auth.uid);
+      // Writes handled by Cloud Functions
+    }
+
+    match /proofs/{proofId} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || (resource.data.assignedPartners != null && request.auth.uid in resource.data.assignedPartners));
+      // Writes handled by Cloud Functions
     }
   }
 }
