@@ -35,4 +35,4 @@ jobs:
       run: |
         firebase use ${{ secrets.FIREBASE_PROJECT_ID }} --add
         firebase functions:config:set gemini.key="${{ secrets.GEMINI_API_KEY }}"
-        firebase deploy --only functions,firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }}
+        firebase deploy --only functions,firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
