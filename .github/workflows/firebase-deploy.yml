@@ -32,7 +32,14 @@ jobs:
     - name: Deploy Functions
       env:
         GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp-sa.json
+    - name: Install & Build Frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+
+    - name: Deploy to Firebase
       run: |
         firebase use ${{ secrets.FIREBASE_PROJECT_ID }} --add
         firebase functions:config:set gemini.key="${{ secrets.GEMINI_API_KEY }}"
-        firebase deploy --force --only functions,firestore:rules --project ${{ secrets.FIREBASE_PROJECT_ID }}
+        firebase deploy --force --only functions,firestore:rules,hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
